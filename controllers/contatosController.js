@@ -1,5 +1,4 @@
 const { ObjectId } = require("mongodb");
-const { find } = require("../models/contatoModel");
 const Contato = require("../models/contatoModel");
 
 
@@ -13,9 +12,12 @@ async  function listar(req,res){
 
 async function consultar(req,res){
 
-    const contato = await Contato.findOne({_id:ObjectId(req.params.id)})
-                        .then(localizado => {return localizado});
-                        return res.json(contato);
+    await contato.find({_id: ObjectId(req.params.id)})
+    .then(contato => {
+        if(contato){return res.json(contato)}
+        else {return res.status(404).json('Contato não localizado')};
+    })
+    .catch( error => {return res.status(500).json(error)});
 
 };
 
@@ -37,14 +39,22 @@ async function criar(req,res){
 
 async function atualizar(req,res){
 
-    await Contato.updateOne({_id:ObjectId(req.params.id)},req.body);
-    return res.status(204).end();
+    await Contato.findOneAndUpdate({_id:ObjectId(req.params.id)},req.body)
+    .then(contato => {
+        if(contato) {return res.status(204).end()}
+        else{ return res.status(404).json("Contato não localizado")};
+    })
+    .catch(error => {return res.status(500).json(error);});
 
 };
 
 async function remover(req,res){
-    await Contato.deleteOne({_id:ObjectId(req.params.id)});
-    return res.status(204).end();  
+    await Contato.findOneDeletOne({_id:ObjectId(req.params.id)})
+    .then(contato => {
+        if(contato) {return res.status(204).end()}
+        else{ return res.status(404).json("Contato não localizado")};
+    })
+    .catch(error => {return res.status(500).json(error);});
 };
 
 module.exports = {listar, consultar, criar, atualizar, remover};
