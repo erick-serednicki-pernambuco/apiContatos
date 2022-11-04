@@ -1,60 +1,65 @@
-const { ObjectId } = require("mongodb");
+const { ObjectID } = require('bson');
+const { PromiseProvider } = require('mongoose');
 const Contato = require("../models/contatoModel");
 
 
 async  function listar(req,res){
-    await contato.find({})
+    await Contato.find({})
     .then(contatos => {return res.json(contatos)})
     .catch( error => {return res.status(500).json(error)});
         
 };
 
 
+
 async function consultar(req,res){
-
-    await contato.find({_id: ObjectId(req.params.id)})
+    await Contato.findOne({_id: ObjectID(req.params.id)})
     .then(contato => {
-        if(contato){return res.json(contato)}
-        else {return res.status(404).json('Contato não localizado')};
+        if(contato) return res.json(contato);
+        else return res.status(404).json('Contato Não Localizado');
     })
-    .catch( error => {return res.status(500).json(error)});
-
+    .catch(error => {return res.status(500).json(error) });
 };
 
-async function criar(req,res){
-
-    const contato = new Contato(req.body);
+async function criar (req, res){
+    const contato =  new Contato(req.body);
     await contato.save()
-    .then(doc =>{ 
-        return res.status(201).json(doc).end();
+    .then (doc => {
+        return res.status(201).json(doc);
     })
-    .catch( error => {
-            Object.values(error.erro.entries).forEach(({properties}) =>
-            {
-                msgErro[properties.path] = properties.message;
-            });
-            return res.status(422).json(msgErro).end();
+    .catch(error => {
+        const msgErro = {};
+        Object.values(error.errors).forEach(({properties}) => {
+            msgErro[properties.path] = properties.message;
         });
-};
+        return res.status(422).json(msgErro);
+})
+}
 
 async function atualizar(req,res){
 
-    await Contato.findOneAndUpdate({_id:ObjectId(req.params.id)},req.body)
+    await Contato.findOneAndUpdate({_id:ObjectID(req.params.id)},req.body, {runValidators : true})
     .then(contato => {
         if(contato) {return res.status(204).end()}
         else{ return res.status(404).json("Contato não localizado")};
     })
-    .catch(error => {return res.status(500).json(error);});
+    .catch(error => {
+        const msgErro = {};
+        Object.values(erro.errors).forEach(({properties}) => {
+            msgErro[properties.path] = properties.message;
+        });
+        return res.status(422).json(msgErro);
+    });
 
 };
 
 async function remover(req,res){
-    await Contato.findOneDeletOne({_id:ObjectId(req.params.id)})
+    await Contato.findOneAndDelete({_id: ObjectID(req.params.id) })
     .then(contato => {
-        if(contato) {return res.status(204).end()}
-        else{ return res.status(404).json("Contato não localizado")};
+        if(contato) return res.status(204).end();
+        else return res.status(404).json('Contato Não localizado'); 
     })
-    .catch(error => {return res.status(500).json(error);});
+    .catch (error => {return res.status(500).json (error) });
 };
 
 module.exports = {listar, consultar, criar, atualizar, remover};
